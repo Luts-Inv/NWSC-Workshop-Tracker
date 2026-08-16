@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>NWSC Pump Asset Tracking</title>
-    <!-- Local QR Code Scanning Engine (Loads quickly over the web) -->
+    <!-- Verified Online Scanning Library Engine -->
     <script src="https://unpkg.com"></script>
     
     <style>
@@ -13,12 +13,10 @@
         .container { max-width: 550px; margin: 0 auto; background: white; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); padding: 16px; }
         h1 { text-align: center; color: #1d4ed8; font-size: 1.25rem; font-weight: bold; text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 2px solid #e5e7eb; padding-bottom: 12px; margin-bottom: 16px; }
         
-        /* Tabs navigation styling */
         .tabs { display: flex; border-bottom: 2px solid #e5e7eb; margin-bottom: 16px; }
         .tab-btn { flex: 1; padding: 12px; font-weight: 600; text-align: center; border: none; background: none; cursor: pointer; border-bottom: 3px solid transparent; color: #6b7280; font-size: 0.95rem; }
         .tab-btn.active { border-bottom-color: #1d4ed8; color: #1d4ed8; }
         
-        /* Form Layout Grid */
         .grid { display: grid; grid-template-columns: 1fr; gap: 12px; }
         @media (min-width: 480px) { .grid { grid-template-columns: 1fr 1fr; } .span-2 { grid-column: span 2; } }
         
@@ -27,18 +25,15 @@
         input, select { width: 100%; border: 1px solid #d1d5db; border-radius: 6px; padding: 10px; font-size: 0.9rem; outline: none; background-color: white; color: #111827; }
         input:focus, select:focus { border-color: #1d4ed8; box-shadow: 0 0 0 2px rgba(29,78,216,0.1); }
         
-        /* Buttons */
         .btn-main { width: 100%; background-color: #1d4ed8; color: white; padding: 14px; border-radius: 6px; font-weight: bold; border: none; cursor: pointer; text-transform: uppercase; font-size: 0.9rem; letter-spacing: 0.05em; margin-top: 16px; }
         .btn-main:disabled { background-color: #9ca3af; cursor: not-allowed; }
         .btn-sub { width: 100%; background-color: #6b7280; color: white; padding: 10px; border-radius: 6px; font-weight: bold; border: none; cursor: pointer; font-size: 0.85rem; margin-top: 12px; text-transform: uppercase; }
         
-        /* QR Code Output Box */
         .qr-box { display: none; flex-direction: column; align-items: center; justify-content: center; padding: 20px; border: 2px dashed #d1d5db; border-radius: 8px; margin-top: 16px; background-color: #f9fafb; text-align: center; }
         #qr-image { background: white; padding: 8px; border: 1px solid #e5e7eb; box-shadow: 0 1px 3px rgba(0,0,0,0.05); width: 200px; height: 200px; }
         .qr-title { font-size: 0.95rem; font-weight: bold; color: #1f2937; margin-top: 12px; }
         .status-msg { margin-top: 8px; font-size: 0.85rem; font-weight: bold; }
         
-        /* Scanner Panel Styling */
         #section-scan { display: none; }
         #reader { width: 100%; border-radius: 8px; overflow: hidden; background: black; }
         .scan-result-card { display: none; padding: 16px; background-color: #eff6ff; border: 1px solid #bfdbfe; border-radius: 8px; margin-top: 16px; }
@@ -152,18 +147,15 @@
                     <h3 class="scan-title">Scanned Pump Configuration</h3>
                     <span id="scan-record-badge" class="badge"></span>
                 </div>
-                <div id="scan-result-list">
-                    <!-- Dynamic decoded values feed row elements here -->
-                </div>
+                <div id="scan-result-list"></div>
                 <button onclick="restartScanner()" class="btn-main" style="margin-top: 16px;">Scan Another Pump</button>
             </div>
         </div>
     </div>
 
     <script>
-        // Connected Google Spreadsheet deployment URL pipeline endpoint
-        const SHEET_URL = "https://google.com";
-        let html5QrcodeScanner;
+        const SHEET_URL = "https://script.google.com/macros/s/AKfycbzsGh0IjBUyPzy0bAKVF4UISJleE-6LbQmN0qZaX-Kz-kr_wIJmYQ8z_XmlkG5QMUxq5w/exec";
+        let html5QrcodeScanner = null;
 
         window.onload = function() {
             const today = new Date().toISOString().split('T')[0];
@@ -171,4 +163,11 @@
             document.getElementById('date-received').value = today;
         };
 
-        // Fixed tab routing module controls
+        function switchTab(tab) {
+            const genTab = document.getElementById('tab-gen');
+            const scanTab = document.getElementById('tab-scan');
+            const genSec = document.getElementById('section-generate');
+            const scanSec = document.getElementById('section-scan');
+
+            if (tab === 'generate') {
+                genTab.classList.add('active');
