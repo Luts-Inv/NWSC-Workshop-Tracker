@@ -194,8 +194,8 @@
             let entryDate = document.getElementById('entry-date').value.trim();
             if (!recordId) {
                 recordId = generateRecordId();
-                entryDate = generateEntryDate();
                 document.getElementById('record-id').value = recordId;
+                entryDate = generateEntryDate();
                 document.getElementById('entry-date').value = entryDate;
             }
 
