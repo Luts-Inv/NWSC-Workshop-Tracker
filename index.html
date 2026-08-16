@@ -376,7 +376,7 @@
         const record = JSON.parse(decodedText);
 
         // Check that this is a valid NWSC asset QR
-        if (!record.recordId) {
+        if (!record.data) {
             throw new Error('QR code does not contain a valid Record ID.');
         }
 
@@ -415,7 +415,7 @@
                 ['Date Received', record.dateReceived ?? record.DateReceived ?? ''],
                 ['Work Order', record.workOrder ?? record.WorkOrder ?? '']
     
-],
+];
             document.getElementById('scan-result-list').innerHTML = fields.map(([label, value]) => `
                 <div class="result-row">
                     <span class="result-label">${escapeHtml(label)}</span>
