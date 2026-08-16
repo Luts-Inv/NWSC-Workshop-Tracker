@@ -397,19 +397,7 @@
     }
 }
 
-        function extractRecordId(decodedText) {
-            try {
-                const url = new URL(decodedText);
-                const id = url.searchParams.get('recordId');
-                if (id) return id;
-            } catch (_) {
-                // Not a URL; continue below.
-            }
-
-            // Also support QR codes containing a plain Record ID.
-            return decodedText.trim() || null;
-        }
-
+     
         function displayRecord(record) {
             const fields = [
                 ['Record ID', record.recordId ?? record.RecordID ?? ''],
