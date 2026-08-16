@@ -237,10 +237,10 @@
         function buildQrPayload(recordId) {
             // The QR stores only the unique record ID through the Google Apps Script endpoint.
             // This keeps the QR small and allows the spreadsheet record to be updated later.
-            return SHEET_URL + '?action=get&recordId=' + encodeURIComponent(recordId);
+            return SHEET_URL + '?action=get&recordId=' + encodeURIComponent(recordId,assetNumber,serialNumber,pumpManufacturer,pumpModel,station);
         }
 
-        function showQrCode(recordId) {
+        function showQrCode(recordId,assetNumber,serialNumber,pumpManufacturer,pumpModel,station) {
             const box = document.getElementById('qr-output-container');
             const qr = document.getElementById('qr-code');
             const title = document.getElementById('qr-title-label');
