@@ -414,8 +414,8 @@
                 ['Delivered By', record.deliveredBy ?? record.DeliveredBy ?? ''],
                 ['Date Received', record.dateReceived ?? record.DateReceived ?? ''],
                 ['Work Order', record.workOrder ?? record.WorkOrder ?? '']
-        };
-
+    
+];
             document.getElementById('scan-result-list').innerHTML = fields.map(([label, value]) => `
                 <div class="result-row">
                     <span class="result-label">${escapeHtml(label)}</span>
