@@ -360,42 +360,42 @@
         }
 
         async function onScanSuccess(decodedText) {
-            // Stop repeated scans while the record is being retrieved.
-            await stopScanner();
-            document.getElementById('scan-result-container').style.display = 'block';
-            document.getElementById('scan-result-list').innerHTML = '<p class="status-msg">Reading asset record...</p>';
+    // Stop repeated scans
+    await stopScanner();
 
-            const recordId = extractRecordId(decodedText);
-            document.getElementById('scan-record-badge').textContent = recordId || 'UNKNOWN';
+    const resultContainer = document.getElementById('scan-result-container');
+    const resultList = document.getElementById('scan-result-list');
+    const badge = document.getElementById('scan-record-badge');
 
-            if (!recordId) {
-                showScanError('The QR code was scanned, but no NWSC Record ID was found.');
-                return;
-            }
+    resultContainer.style.display = 'block';
+    resultList.innerHTML =
+        '<p class="status-msg">Reading asset record...</p>';
 
-            try {
-                const url = SHEET_URL + '?action=get&recordId=' + encodeURIComponent(recordId);
-                const response = await fetch(url, { method: 'GET' });
-                const text = await response.text();
+    try {
+        // The QR now contains the COMPLETE pump record as JSON
+        const record = JSON.parse(decodedText);
 
-                let result;
-                try {
-                    result = JSON.parse(text);
-                } catch (_) {
-                    throw new Error('Google Apps Script returned a non-JSON response.');
-                }
-
-                if (!response.ok || result.success === false) {
-                    throw new Error(result.message || 'Asset record was not found.');
-                }
-
-                const record = result.data || result.record || result;
-                displayRecord(record);
-            } catch (error) {
-                console.error(error);
-                showScanError('Could not retrieve the pump record: ' + error.message);
-            }
+        // Check that this is a valid NWSC asset QR
+        if (!record.recordId) {
+            throw new Error('QR code does not contain a valid Record ID.');
         }
+
+        // Show ONLY the actual Record ID in the blue badge
+        badge.textContent = record.recordId;
+
+        // Display all information contained in the QR
+        displayRecord(record);
+
+    } catch (error) {
+        console.error('QR scan error:', error);
+
+        badge.textContent = 'INVALID';
+
+        showScanError(
+            'Invalid asset QR code: ' + error.message
+        );
+    }
+}
 
         function extractRecordId(decodedText) {
             try {
