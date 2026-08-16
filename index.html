@@ -182,7 +182,7 @@
             }
         }
 
-        function generateRecordId() {
+        function generatedata() {
             const station = (document.getElementById('station').value || 'GEN')
                 .trim().toUpperCase().replace(/[^A-Z0-9]/g, '').substring(0, 5) || 'GEN';
             const timePart = Date.now().toString().slice(-6);
@@ -190,10 +190,10 @@
         }
 
         function collectFormData() {
-            let recordId = document.getElementById('record-id').value.trim();
-            if (!recordId) {
-                recordId = generateRecordId();
-                document.getElementById('record-id').value = recordId;
+            let data = document.getElementById('data').value.trim();
+            if (!data) {
+                data = generatedata();
+                document.getElementById('data').value = data;
             }
 
             return {
@@ -376,7 +376,7 @@
         const record = JSON.parse(decodedText);
 
         // Check that this is a valid NWSC asset QR
-        if (!record.data) {
+        if (!record.recordId) {
             throw new Error('QR code does not contain a valid Record ID.');
         }
 
