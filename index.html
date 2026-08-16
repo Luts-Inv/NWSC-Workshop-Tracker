@@ -119,13 +119,25 @@
                     <label>Date Received</label>
                     <input type="date" id="date-received">
                 </div>
-                <div class="form-group span-2">
-                    <label>Work Order</label>
-                    <input type="text" id="work-order" placeholder="e.g. 001">
-                </div>
+                <div class="form-group">
+                    <label>Fault Reported</label>
+                    <input type="text" id="fault-reported" placeholder="e.g. Mechanical seal leakage">
+                    </div>
+
+<div class="form-group">
+    <label>Condition</label>
+    <select id="condition">
+        <option value="">Select Condition</option>
+        <option value="Good">Good</option>
+        <option value="Fair">Fair</option>
+        <option value="Poor">Poor</option>
+        <option value="Critical">Critical</option>
+        <option value="Under Maintenance">Under Maintenance</option>
+    </select>
+</div>
             </div>
 
-            <button id="submit-btn" onclick="sendToGoogleSheets()" class="btn-main">Generate Asset QR Code</button>
+            <button id="submit-btn" onclick="registerAsset()" class="btn-main">Register Asset & Generate QR Code</button>
 
             <div id="qr-output-container" class="qr-box">
                 <div id="qr-code"></div>
@@ -190,11 +202,64 @@
         }
 
         function collectFormData() {
-            let recordId = document.getElementById('record-id').value.trim();
-            if (!recordId) {
-                recordId = generateRecordId();
-                document.getElementById('record-id').value = recordId;
-            }
+    let recordId = document.getElementById('record-id').value.trim();
+
+    if (!recordId) {
+        recordId = generateRecordId();
+        document.getElementById('record-id').value = recordId;
+    }
+
+    return {
+        action: 'save',
+
+        recordId: recordId,
+
+        entryDate:
+            document.getElementById('entry-date').value,
+
+        assetNumber:
+            document.getElementById('asset-num').value.trim(),
+
+        serialNumber:
+            document.getElementById('serial-num').value.trim(),
+
+        pumpManufacturer:
+            document.getElementById('pump-man').value.trim(),
+
+        pumpModel:
+            document.getElementById('pump-model').value.trim(),
+
+        pumpType:
+            document.getElementById('pump-type').value,
+
+        pumpCapacity:
+            document.getElementById('pump-cap').value,
+
+        motorRating:
+            document.getElementById('motor-rate').value,
+
+        motorSerialNumber:
+            document.getElementById('motor-serial').value.trim(),
+
+        station:
+            document.getElementById('station').value.trim(),
+
+        location:
+            document.getElementById('location').value.trim(),
+
+        deliveredBy:
+            document.getElementById('delivered-by').value.trim(),
+
+        dateReceived:
+            document.getElementById('date-received').value,
+
+        faultReported:
+            document.getElementById('fault-reported').value.trim(),
+
+        condition:
+            document.getElementById('condition').value
+    };
+}
 
             return {
                 action: 'save',
@@ -212,7 +277,8 @@
                 location: document.getElementById('location').value.trim(),
                 deliveredBy: document.getElementById('delivered-by').value.trim(),
                 dateReceived: document.getElementById('date-received').value,
-                workOrder: document.getElementById('work-order').value.trim()
+                faultReported: document.getElementById('fault-reported').value.trim(),
+                condition: document.getElementById('condition').value
             };
         }
 
@@ -409,7 +475,8 @@
                 ['Location / Installation', record.location ?? record.Location ?? ''],
                 ['Delivered By', record.deliveredBy ?? record.DeliveredBy ?? ''],
                 ['Date Received', record.dateReceived ?? record.DateReceived ?? ''],
-                ['Work Order', record.workOrder ?? record.WorkOrder ?? '']
+                ['Fault Reported', record.faultReported ?? record.FaultReported ?? ''],
+                ['Condition', record.condition ?? record.Condition ?? '']
             ];
 
             document.getElementById('scan-result-list').innerHTML = fields.map(([label, value]) => `
