@@ -191,12 +191,10 @@
 
         function collectFormData() {
             let recordId = document.getElementById('record-id').value.trim();
-            let entryDate = document.getElementById('entry-date').value.trim();
             if (!recordId) {
                 recordId = generateRecordId();
                 document.getElementById('record-id').value = recordId;
-                entryDate = generateEntryDate();
-                document.getElementById('entry-date').value = entryDate;
+                
             }
 
             return {
@@ -273,7 +271,7 @@
             status.style.color = '#1d4ed8';
 
             // Generate the QR immediately so the asset is still usable even if the cloud request fails.
-            showQrCode(data.recordId);
+            showQrCode(data);
 
             try {
                 const body = new URLSearchParams(data);
