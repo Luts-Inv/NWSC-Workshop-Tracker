@@ -234,28 +234,46 @@
             return true;
         }
 
-        function buildQrPayload(recordId) {
-            // The QR stores only the unique record ID through the Google Apps Script endpoint.
-            // This keeps the QR small and allows the spreadsheet record to be updated later.
-            return SHEET_URL + '?action=get&recordId=' + encodeURIComponent(recordId,assetNumber,serialNumber,pumpManufacturer,pumpModel,station);
+        function buildQrPayload(data) {
+    // Store the COMPLETE asset record inside the QR code.
+    const qrData = {
+        recordId: data.recordId,
+        entryDate: data.entryDate,
+        assetNumber: data.assetNumber,
+        serialNumber: data.serialNumber,
+        pumpManufacturer: data.pumpManufacturer,
+        pumpModel: data.pumpModel,
+        pumpType: data.pumpType,
+        pumpCapacity: data.pumpCapacity,
+        motorRating: data.motorRating,
+        motorSerialNumber: data.motorSerialNumber,
+        station: data.station,
+        location: data.location,
+        deliveredBy: data.deliveredBy,
+        dateReceived: data.dateReceived,
+        workOrder: data.workOrder
+    };
+
+    return JSON.stringify(qrData);
         }
 
-        function showQrCode(recordId,assetNumber,serialNumber,pumpManufacturer,pumpModel,station) {
-            const box = document.getElementById('qr-output-container');
-            const qr = document.getElementById('qr-code');
-            const title = document.getElementById('qr-title-label');
+      function showQrCode(data) {
+    const box = document.getElementById('qr-output-container');
+    const qr = document.getElementById('qr-code');
+    const title = document.getElementById('qr-title-label');
 
-            qr.innerHTML = '';
-            new QRCode(qr, {
-                text: buildQrPayload(recordId,assetNumber,serialNumber,pumpManufacturer,pumpModel,station),
-                width: 300,
-                height: 300,
-                correctLevel: QRCode.CorrectLevel.H
-            });
+    qr.innerHTML = '';
 
-            title.textContent = 'Asset QR: ' + recordId;
-            box.style.display = 'flex';
-        }
+    new QRCode(qr, {
+        text: buildQrPayload(data),
+        width: 300,
+        height: 300,
+        correctLevel: QRCode.CorrectLevel.H
+    });
+
+    title.textContent = 'Asset QR: ' + data.recordId;
+    box.style.display = 'flex';
+}
 
         async function sendToGoogleSheets() {
             const button = document.getElementById('submit-btn');
@@ -270,7 +288,7 @@
             status.style.color = '#1d4ed8';
 
             // Generate the QR immediately so the asset is still usable even if the cloud request fails.
-            showQrCode(data.recordId);
+            showQrCode(data);
 
             try {
                 const body = new URLSearchParams(data);
