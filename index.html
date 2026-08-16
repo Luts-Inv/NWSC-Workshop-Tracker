@@ -4,20 +4,21 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>NWSC Pump Asset Tracking</title>
+    <!-- Local QR Code Scanning Engine (Loads quickly over the web) -->
+    <script src="https://unpkg.com"></script>
     
     <style>
-        /* Pure local CSS styling to guarantee full offline layout rendering */
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { font-family: system-ui, -apple-system, sans-serif; background-color: #f3f4f6; padding: 12px; color: #374151; }
         .container { max-width: 550px; margin: 0 auto; background: white; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); padding: 16px; }
         h1 { text-align: center; color: #1d4ed8; font-size: 1.25rem; font-weight: bold; text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 2px solid #e5e7eb; padding-bottom: 12px; margin-bottom: 16px; }
         
-        /* Tabs navigation */
+        /* Tabs navigation styling */
         .tabs { display: flex; border-bottom: 2px solid #e5e7eb; margin-bottom: 16px; }
         .tab-btn { flex: 1; padding: 12px; font-weight: 600; text-align: center; border: none; background: none; cursor: pointer; border-bottom: 3px solid transparent; color: #6b7280; font-size: 0.95rem; }
         .tab-btn.active { border-bottom-color: #1d4ed8; color: #1d4ed8; }
         
-        /* Grid Layout for Forms */
+        /* Form Layout Grid */
         .grid { display: grid; grid-template-columns: 1fr; gap: 12px; }
         @media (min-width: 480px) { .grid { grid-template-columns: 1fr 1fr; } .span-2 { grid-column: span 2; } }
         
@@ -31,11 +32,23 @@
         .btn-main:disabled { background-color: #9ca3af; cursor: not-allowed; }
         .btn-sub { width: 100%; background-color: #6b7280; color: white; padding: 10px; border-radius: 6px; font-weight: bold; border: none; cursor: pointer; font-size: 0.85rem; margin-top: 12px; text-transform: uppercase; }
         
-        /* QR Output Section */
+        /* QR Code Output Box */
         .qr-box { display: none; flex-direction: column; align-items: center; justify-content: center; padding: 20px; border: 2px dashed #d1d5db; border-radius: 8px; margin-top: 16px; background-color: #f9fafb; text-align: center; }
         #qr-image { background: white; padding: 8px; border: 1px solid #e5e7eb; box-shadow: 0 1px 3px rgba(0,0,0,0.05); width: 200px; height: 200px; }
         .qr-title { font-size: 0.95rem; font-weight: bold; color: #1f2937; margin-top: 12px; }
         .status-msg { margin-top: 8px; font-size: 0.85rem; font-weight: bold; }
+        
+        /* Scanner Panel Styling */
+        #section-scan { display: none; }
+        #reader { width: 100%; border-radius: 8px; overflow: hidden; background: black; }
+        .scan-result-card { display: none; padding: 16px; background-color: #eff6ff; border: 1px solid #bfdbfe; border-radius: 8px; margin-top: 16px; }
+        .scan-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #d1d5db; padding-bottom: 8px; margin-bottom: 12px; }
+        .scan-title { font-size: 0.85rem; font-weight: bold; color: #1e3a8a; text-transform: uppercase; }
+        .badge { background-color: #1d4ed8; color: white; font-size: 0.75rem; padding: 2px 8px; border-radius: 4px; font-family: monospace; font-weight: bold; }
+        .result-row { display: flex; flex-direction: column; border-bottom: 1px solid #f3f4f6; padding: 6px 0; }
+        @media (min-width: 400px) { .result-row { flex-direction: row; justify-content: space-between; } }
+        .result-label { font-size: 0.7rem; font-weight: 600; color: #6b7280; text-transform: uppercase; }
+        .result-val { font-size: 0.85rem; font-weight: bold; color: #111827; background: white; padding: 2px 6px; border-radius: 4px; border: 1px solid #f3f4f6; word-break: break-all; }
     </style>
 </head>
 <body>
@@ -131,14 +144,26 @@
         </div>
 
         <!-- SCANNER SECTION -->
-        <div id="section-scan" style="display:none; text-align:center; padding:20px; color:#6b7280;">
-            <p>Scanner feature can be integrated to read spreadsheet rows direct from camera loop.</p>
+        <div id="section-scan">
+            <div id="reader"></div>
+            
+            <div id="scan-result-container" class="scan-result-card">
+                <div class="scan-header">
+                    <h3 class="scan-title">Scanned Pump Configuration</h3>
+                    <span id="scan-record-badge" class="badge"></span>
+                </div>
+                <div id="scan-result-list">
+                    <!-- Dynamic decoded values feed row elements here -->
+                </div>
+                <button onclick="restartScanner()" class="btn-main" style="margin-top: 16px;">Scan Another Pump</button>
+            </div>
         </div>
     </div>
 
     <script>
-        // Connected Google Apps Script deployment URL endpoint
-        const SHEET_URL = "https://script.google.com/macros/s/AKfycbzsGh0IjBUyPzy0bAKVF4UISJleE-6LbQmN0qZaX-Kz-kr_wIJmYQ8z_XmlkG5QMUxq5w/exec";
+        // Connected Google Spreadsheet deployment URL pipeline endpoint
+        const SHEET_URL = "https://google.com";
+        let html5QrcodeScanner;
 
         window.onload = function() {
             const today = new Date().toISOString().split('T')[0];
@@ -146,35 +171,4 @@
             document.getElementById('date-received').value = today;
         };
 
-        function switchTab(tab) {
-            const genTab = document.getElementById('tab-gen');
-            const scanTab = document.getElementById('tab-scan');
-            const genSec = document.getElementById('section-generate');
-            const scanSec = document.getElementById('section-scan');
-
-            if (tab === 'generate') {
-                genTab.classList.add('active'); scanTab.classList.remove('active');
-                genSec.style.display = 'block'; scanSec.style.display = 'none';
-            } else {
-                scanTab.classList.add('active'); genTab.classList.remove('active');
-                scanSec.style.display = 'block'; genSec.style.display = 'none';
-            }
-        }
-
-        async function sendToGoogleSheets() {
-            const submitBtn = document.getElementById('submit-btn');
-            const statusLabel = document.getElementById('cloud-status');
-            const qrOutput = document.getElementById('qr-output-container');
-            const qrImg = document.getElementById('qr-image');
-            
-            const fields = {
-                "REC": document.getElementById('record-id').value.trim(),
-                "EDAT": document.getElementById('entry-date').value,
-                "ANUM": document.getElementById('asset-num').value.trim(),
-                "SNUM": document.getElementById('serial-num').value.trim(),
-                "MANF": document.getElementById('pump-man').value.trim(),
-                "MODL": document.getElementById('pump-model').value.trim(),
-                "TYPE": document.getElementById('pump-type').value,
-                "CAP": document.getElementById('pump-cap').value.trim(),
-                "MOTR": document.getElementById('motor-rate').value.trim(),
-                "MSN": document.getElementById('motor-serial').value.trim(),
+        // Fixed tab routing module controls
