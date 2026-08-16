@@ -235,22 +235,22 @@
             return true;
         }
 
-        function buildQrPayload(recordId) {
+        function buildQrPayload(recordId, entryDate) {
             // The QR stores only the unique record ID through the Google Apps Script endpoint.
             // This keeps the QR small and allows the spreadsheet record to be updated later.
-            return SHEET_URL + '?action=get&data=' + encodeURIComponent(recordId);
+            return SHEET_URL + '?action=get&data=' + encodeURIComponent(recordId, entryDate);
         }
 
-        function showQrCode(recordId) {
+        function showQrCode(recordId, entryDate) {
             const box = document.getElementById('qr-output-container');
             const qr = document.getElementById('qr-code');
             const title = document.getElementById('qr-title-label');
 
             qr.innerHTML = '';
             new QRCode(qr, {
-                text: buildQrPayload(recordID, entryDate),
-                width: 200,
-                height: 200,
+                text: buildQrPayload(entryDate, entryDate),
+                width: 400,
+                height: 400,
                 correctLevel: QRCode.CorrectLevel.H
             });
 
