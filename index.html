@@ -203,6 +203,7 @@
 
         function collectFormData() {
     let recordId = document.getElementById('record-id').value.trim();
+    let entryDate = document.getElementById('entry-date').value,
 
     if (!recordId) {
         recordId = generateRecordId();
@@ -214,8 +215,7 @@
 
         recordId: recordId,
 
-        entryDate:
-            document.getElementById('entry-date').value,
+        entryDate: entry-date,
 
         assetNumber:
             document.getElementById('asset-num').value.trim(),
