@@ -150,7 +150,7 @@
 
     <script>
         // Your existing Google Apps Script web-app URL.
-        const SHEET_URL = "https://script.google.com/macros/s/AKfycbxtzQYb3R2_5Evtz9-Cdtnd85cCfpsOmcpZVK6sCVXaigP_1FREztWi25cuDaMPEvXVsA/exec";
+        const SHEET_URL = "https://script.google.com/macros/s/AKfycbzsGh0IjBUyPzy0bAKVF4UISJleE-6LbQmN0qZaX-Kz-kr_wIJmYQ8z_XmlkG5QMUxq5w/exec";
 
         let html5QrcodeScanner = null;
         let scannerRunning = false;
@@ -182,7 +182,7 @@
             }
         }
 
-        function generatedata() {
+        function generateRecordId() {
             const station = (document.getElementById('station').value || 'GEN')
                 .trim().toUpperCase().replace(/[^A-Z0-9]/g, '').substring(0, 5) || 'GEN';
             const timePart = Date.now().toString().slice(-6);
@@ -190,10 +190,10 @@
         }
 
         function collectFormData() {
-            let data = document.getElementById('data').value.trim();
-            if (!data) {
-                data = generatedata();
-                document.getElementById('data').value = data;
+            let recordId = document.getElementById('record-id').value.trim();
+            if (!recordId) {
+                recordId = generateRecordId();
+                document.getElementById('record-id').value = recordId;
             }
 
             return {
@@ -215,6 +215,7 @@
                 workOrder: document.getElementById('work-order').value.trim()
             };
         }
+
         function validateData(data) {
             const required = [
                 ['Record ID', data.recordId],
@@ -233,46 +234,28 @@
             return true;
         }
 
-        function buildQrPayload(data) {
-    // Store the COMPLETE asset record inside the QR code.
-    const qrData = {
-        recordId: data.recordId,
-        entryDate: data.entryDate,
-        assetNumber: data.assetNumber,
-        serialNumber: data.serialNumber,
-        pumpManufacturer: data.pumpManufacturer,
-        pumpModel: data.pumpModel,
-        pumpType: data.pumpType,
-        pumpCapacity: data.pumpCapacity,
-        motorRating: data.motorRating,
-        motorSerialNumber: data.motorSerialNumber,
-        station: data.station,
-        location: data.location,
-        deliveredBy: data.deliveredBy,
-        dateReceived: data.dateReceived,
-        workOrder: data.workOrder
-    };
-
-    return JSON.stringify(qrData);
+        function buildQrPayload(recordId) {
+            // The QR stores only the unique record ID through the Google Apps Script endpoint.
+            // This keeps the QR small and allows the spreadsheet record to be updated later.
+            return SHEET_URL + '?action=get&recordId=' + encodeURIComponent(recordId);
         }
 
-      function showQrCode(data) {
-    const box = document.getElementById('qr-output-container');
-    const qr = document.getElementById('qr-code');
-    const title = document.getElementById('qr-title-label');
+        function showQrCode(recordId) {
+            const box = document.getElementById('qr-output-container');
+            const qr = document.getElementById('qr-code');
+            const title = document.getElementById('qr-title-label');
 
-    qr.innerHTML = '';
+            qr.innerHTML = '';
+            new QRCode(qr, {
+                text: buildQrPayload(recordId),
+                width: 200,
+                height: 200,
+                correctLevel: QRCode.CorrectLevel.H
+            });
 
-    new QRCode(qr, {
-        text: buildQrPayload(data),
-        width: 300,
-        height: 300,
-        correctLevel: QRCode.CorrectLevel.H
-    });
-
-    title.textContent = 'Asset QR: ' + data.recordId;
-    box.style.display = 'flex';
-}
+            title.textContent = 'Asset QR: ' + recordId;
+            box.style.display = 'flex';
+        }
 
         async function sendToGoogleSheets() {
             const button = document.getElementById('submit-btn');
@@ -287,7 +270,7 @@
             status.style.color = '#1d4ed8';
 
             // Generate the QR immediately so the asset is still usable even if the cloud request fails.
-            showQrCode(data);
+            showQrCode(data.recordId);
 
             try {
                 const body = new URLSearchParams(data);
@@ -360,43 +343,56 @@
         }
 
         async function onScanSuccess(decodedText) {
-    // Stop repeated scans
-    await stopScanner();
+            // Stop repeated scans while the record is being retrieved.
+            await stopScanner();
+            document.getElementById('scan-result-container').style.display = 'block';
+            document.getElementById('scan-result-list').innerHTML = '<p class="status-msg">Reading asset record...</p>';
 
-    const resultContainer = document.getElementById('scan-result-container');
-    const resultList = document.getElementById('scan-result-list');
-    const badge = document.getElementById('scan-record-badge');
+            const recordId = extractRecordId(decodedText);
+            document.getElementById('scan-record-badge').textContent = recordId || 'UNKNOWN';
 
-    resultContainer.style.display = 'block';
-    resultList.innerHTML =
-        '<p class="status-msg">Reading asset record...</p>';
+            if (!recordId) {
+                showScanError('The QR code was scanned, but no NWSC Record ID was found.');
+                return;
+            }
 
-    try {
-        // The QR now contains the COMPLETE pump record as JSON
-        const record = JSON.parse(decodedText);
+            try {
+                const url = SHEET_URL + '?action=get&recordId=' + encodeURIComponent(recordId);
+                const response = await fetch(url, { method: 'GET' });
+                const text = await response.text();
 
-        // Check that this is a valid NWSC asset QR
-        if (!record.recordId) {
-            throw new Error('QR code does not contain a valid Record ID.');
+                let result;
+                try {
+                    result = JSON.parse(text);
+                } catch (_) {
+                    throw new Error('Google Apps Script returned a non-JSON response.');
+                }
+
+                if (!response.ok || result.success === false) {
+                    throw new Error(result.message || 'Asset record was not found.');
+                }
+
+                const record = result.data || result.record || result;
+                displayRecord(record);
+            } catch (error) {
+                console.error(error);
+                showScanError('Could not retrieve the pump record: ' + error.message);
+            }
         }
 
-        // Show ONLY the actual Record ID in the blue badge
-        badge.textContent = record.recordId;
+        function extractRecordId(decodedText) {
+            try {
+                const url = new URL(decodedText);
+                const id = url.searchParams.get('recordId');
+                if (id) return id;
+            } catch (_) {
+                // Not a URL; continue below.
+            }
 
-        // Display all information contained in the QR
-        displayRecord(record);
+            // Also support QR codes containing a plain Record ID.
+            return decodedText.trim() || null;
+        }
 
-    } catch (error) {
-        console.error('QR scan error:', error);
-
-        badge.textContent = 'INVALID';
-
-        showScanError(
-            'Invalid asset QR code: ' + error.message
-        );
-    }
-}
-  
         function displayRecord(record) {
             const fields = [
                 ['Record ID', record.recordId ?? record.RecordID ?? ''],
@@ -414,8 +410,8 @@
                 ['Delivered By', record.deliveredBy ?? record.DeliveredBy ?? ''],
                 ['Date Received', record.dateReceived ?? record.DateReceived ?? ''],
                 ['Work Order', record.workOrder ?? record.WorkOrder ?? '']
-    
-]
+            ];
+
             document.getElementById('scan-result-list').innerHTML = fields.map(([label, value]) => `
                 <div class="result-row">
                     <span class="result-label">${escapeHtml(label)}</span>
