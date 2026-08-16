@@ -182,7 +182,7 @@
             }
         }
 
-        function generateRecordId() {
+        function generateRecordId(recordId) {
             const station = (document.getElementById('station').value || 'GEN')
                 .trim().toUpperCase().replace(/[^A-Z0-9]/g, '').substring(0, 5) || 'GEN';
             const timePart = Date.now().toString().slice(-6);
