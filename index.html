@@ -193,7 +193,9 @@
             let recordId = document.getElementById('record-id').value.trim();
             if (!recordId) {
                 recordId = generateRecordId();
+                entryDate = generateEntryDate();
                 document.getElementById('record-id').value = recordId;
+                document.getElementById('entry-date').value = entryDate;
             }
 
             return {
@@ -349,6 +351,7 @@
             document.getElementById('scan-result-list').innerHTML = '<p class="status-msg">Reading asset record...</p>';
 
             const recordId = extractRecordId(decodedText);
+            const entryDate = extractEntryDate(decodedText);
             document.getElementById('scan-record-badge').textContent = recordId || 'UNKNOWN';
 
             if (!recordId) {
