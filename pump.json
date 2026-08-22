@@ -1,5 +1,21 @@
 [
-
-
-
+  {
+    "action": "save",
+    "recordId": "NWSC-GGABA-P-0000",
+    "entryDate": "2026-08-22",
+    "assetNumber": "NWSC-001",
+    "serialNumber": "P12345",
+    "pumpManufacturer": "Grundfos",
+    "pumpModel": "CR 32",
+    "pumpType": "Centrifugal",
+    "pumpCapacity": "100",
+    "motorRating": "30",
+    "motorSerialNumber": "M12345",
+    "station": "Ggaba",
+    "location": "Workshop",
+    "deliveredBy": "John",
+    "dateReceived": "2026-08-22",
+    "faultReported": "None",
+    "condition": "Under Maintenance"
+  }
 ]
